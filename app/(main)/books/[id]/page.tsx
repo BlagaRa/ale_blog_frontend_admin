@@ -1,11 +1,12 @@
 'use client'
-import { useBookStore, Gen } from '@/store/booksStore'; // Asigură-te că imporți Gen
+import { useBookStore, Gen } from '@/store/booksStore';
 import { BookOpen, Edit, Trash2, Plus, X, Save, Ban } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react'; // 1. Importă Suspense
 
-function Page() {
+// 2. Mutăm toată logica în PageContent
+function PageContent() {
   const { books, getBooks, isLoading, deleteBook, editBook, addReview, updateReview, deleteReview } = useBookStore();
   
   const searchParams = useSearchParams();
@@ -20,7 +21,6 @@ function Page() {
   const [bookDraftImage, setBookDraftImage] = useState<File | null>(null);
   
   const imageInputRef = useRef<HTMLInputElement>(null);
-
   const [isAddReviewModalOpen, setIsAddReviewModalOpen] = useState(false);
 
   useEffect(() => {
@@ -123,7 +123,7 @@ function Page() {
           {isEditingBook ? (
             <input name="title" defaultValue={currentBook.title} placeholder="Book Title" className="font-serif text-3xl mb-4 font-bold text-center border-b-2 border-accent bg-transparent outline-none w-full" required />
           ) : (
-            <h1 className='font-serif text-4xl mb-2 font-bold'>{currentBook.title}</h1>
+            <h1 className='font-serif text-4xl mb-2 font-bold text-center'>{currentBook.title}</h1>
           )}
 
           <div 
@@ -134,7 +134,7 @@ function Page() {
               src={bookDraftImage ? URL.createObjectURL(bookDraftImage) : (currentBook.image || '/contact.jpg')}
               alt="logo"
               width={290}
-              height={100}
+              height={400}
               className={`object-contain border-4 border-highli ${isEditingBook ? 'group-hover:opacity-50 transition-opacity' : ''}`} 
               priority
             />
@@ -183,7 +183,6 @@ function Page() {
             <p className='self-start font-lora text-sm opacity-80 mb-6'>Published in: {new Date(currentBook.writtenAt).toLocaleDateString()}</p>
           )}
 
-          {/* Butoane Acțiune Carte */}
           <div className='flex flex-row gap-4 mt-auto w-full justify-center'>
             {isEditingBook ? (
               <>
@@ -207,7 +206,6 @@ function Page() {
           </div>
         </form>
 
-        {/* PARTEA DREAPTĂ: Recenzie */}
         <div className='flex-2 w-full p-10 flex flex-col items-center'>
           <h1 className='font-bold text-3xl lg:text-5xl font-lora text-center'>{currentBook.title}</h1>
           <p className='self-end text-xl italic font-lora mb-10'>By {currentBook.author}</p>
@@ -215,9 +213,7 @@ function Page() {
           {currentBook.review ? (
             <div className="w-full flex flex-col items-center">
               {isEditingReview ? (
-                // --- STAREA DE EDITARE RECENZIE INLINE ---
                 <div className="w-full flex flex-col items-center gap-6 bg-bfirst p-6 rounded-2xl border-2 border-accent shadow-md">
-                  {/* Stelele interactive (Clickable Books) */}
                   <div className='flex flex-row gap-2'>
                     {[...Array(5)].map((_, index) => (
                       <BookOpen 
@@ -247,13 +243,11 @@ function Page() {
                   </div>
                 </div>
               ) : (
-                // --- STAREA DE VIZUALIZARE RECENZIE ---
                 <div className="w-full flex flex-col">
                   <p className='font-lora text-md leading-relaxed text-justify'>
                     {currentBook.review.description}
                   </p>
                   
-                  {/* Butoane Acțiune Recenzie */}
                   <div className='flex flex-row gap-6 mt-10 justify-center border-t-2 border-accent/20 pt-6'>
                     <button 
                       onClick={() => {
@@ -291,7 +285,13 @@ function Page() {
         </div>
       </div>
     </>
-  )
+  );
 }
 
-export default Page;
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="mt-40 text-center font-lora text-2xl">Loading...</div>}>
+      <PageContent />
+    </Suspense>
+  );
+}
